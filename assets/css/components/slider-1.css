@@ -32,7 +32,7 @@
   bottom: 20px;
   left: 50%;
   top: 27%;
-  color: white;
+  color: var(--light, #fff);
   font-size: 3em;
   font-weight: 800;
   width: max-content;
@@ -50,9 +50,10 @@
   z-index: 3;
 }
 
-.slider-1 .prev, .slider-1 .next {
+.slider-1 .prev,
+.slider-1 .next {
   background-color: rgba(0, 0, 0, 0.5);
-  color: white;
+  color: var(--light, #fff);
   font-size: 2em;
   padding: 10px;
   cursor: pointer;
@@ -70,7 +71,7 @@
 }
 
 .slider-1 .carousel-indicators li {
-  background-color: #666;
+  background-color: var(--text, #666);
   border-radius: 50%;
   width: 15px;
   height: 15px;
@@ -80,7 +81,7 @@
 }
 
 .slider-1 .carousel-indicators li.active {
-  background-color: white;
+  background-color: var(--light, #fff);
 }
 
 .slider-1 .btn-teo-caption {
@@ -89,10 +90,10 @@
   left: 50%;
   transform: translateX(-50%);
   padding: 10px 20px;
-  background-color: var(--primary-color);
-  color: var(--tertiary-color);
+  background-color: var(--primary, var(--primary-color));
+  color: var(--tertiary, var(--tertiary-color));
   font-weight: bold;
-  border: 3px solid var(--secondary-color);
+  border: 3px solid var(--secondary, var(--secondary-color));
   border-radius: 50px;
   text-align: center;
   text-decoration: none;
@@ -102,14 +103,14 @@
 
 .slider-1 .btn-teo-caption:hover {
   cursor: pointer;
-  background-color: var(--tertiary-color);
-  color: var(--secondary-color);
-  border: 3px solid var(--primary-color);
+  background-color: var(--tertiary, var(--tertiary-color));
+  color: var(--secondary, var(--secondary-color));
+  border: 3px solid var(--primary, var(--primary-color));
   transition: all 1s ease;
 }
 
 .slider-1 .carousel-caption span {
-  color: var(--primary-color) !important;
+  color: var(--primary, var(--primary-color)) !important;
 }
 
 /* Mobile / Tablet Responsive Design */
@@ -124,7 +125,8 @@
     padding: 8px 16px;
   }
 
-  .slider-1 .carousel-buttons .prev, .slider-1 .carousel-buttons .next {
+  .slider-1 .carousel-buttons .prev,
+  .slider-1 .carousel-buttons .next {
     font-size: 1.5em;
   }
 
@@ -139,17 +141,19 @@
   .slider-1 .carousel-caption {
     font-size: 1.1em;
     bottom: 10px;
-}
-.slider-1 .carousel-indicators {
-  bottom: 0px;
-}
+  }
+
+  .slider-1 .carousel-indicators {
+    bottom: 0px;
+  }
 
   .slider-1 .btn-teo-caption {
     font-size: 0.8em;
     padding: 6px 12px;
   }
 
-  .slider-1 .carousel-buttons .prev, .slider-1 .carousel-buttons .next {
+  .slider-1 .carousel-buttons .prev,
+  .slider-1 .carousel-buttons .next {
     font-size: 1.2em;
   }
 
