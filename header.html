@@ -1,0 +1,92 @@
+<header class="header-3" id="page-header">
+<base href=""/>
+<!-- top bar -->
+<div class="header-3-top-bar">
+<div class="container">
+<div class="row">
+<div class="col-sm-8 col-xs-12">
+<ul class="list-inline header-3-bar-list">
+<li><i class="ri-phone-line"></i> +91 888 888 8888</li>
+<li class="hidden-xs"><span class="sep">|</span>
+<i class="ri-map-pin-line"></i> Address: 1215, CP Street, Mumbai
+						</li>
+</ul>
+</div>
+<div class="col-sm-4 col-xs-12 text-right">
+<ul class="list-inline header-3-bar-list">
+<li><i class="ri-mail-line"></i> Email: info@chartered.com</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<!-- logo + nav -->
+<div class="header-3-holder">
+<div class="container">
+<div class="row">
+<!-- logo -->
+<div class="col-xs-6 col-sm-3">
+<a class="header-3-logo" href="index.html">
+<img alt="FinAdviser" class="img-responsive" src="assets/images/logo-header-3.png"/>
+</a>
+</div>
+<!-- nav -->
+<div class="col-xs-6 col-sm-9">
+<nav class="navbar navbar-default header-3-navbar" role="navigation">
+<div class="navbar-header">
+<button class="navbar-toggle collapsed" data-target="#dynamic-header" data-toggle="collapse" type="button">
+<span class="sr-only">Toggle navigation</span>
+<span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+</button>
+</div>
+<div class="collapse navbar-collapse" id="dynamic-header"><ul class="nav navbar-nav navbar-right main-navigation text-uppercase font-lato"><li><a href="index.html">Home</a></li><li><a href="About_Us.html">About Us</a></li><li><a href="Services.html">Services</a></li><li><a href="Blog.html">Blog</a></li><li><a href="Contact_Us.html">Contact Us</a></li></ul></div>
+</nav>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- =========================================================
+     HERO (background set inline so you can swap easily)
+     ========================================================= -->
+<section class="header-3-hero main-header-section" style="background:url('assets/images/header-3-bg.jpg') center/cover no-repeat;">
+<div class="header-3-hero-overlay"></div>
+<div class="container header-3-hero-content">
+<h1 class="header-3-hero-title">
+			Strengthening you<br/>
+			with <span class="header-3-highlight">Financially</span>
+</h1>
+<p class="header-3-hero-sub">
+			There's only one thing in the world I want and that is the best financial
+			planning. Feel good with Earning. Feel free to call us.
+		</p>
+<a class="btn header-3-btn-primary" href="#">
+			Discover More <i class="ri-arrow-right-line"></i>
+</a>
+</div>
+</section>
+<script>
+	$(function () {
+
+		var $header = $('#page-header');
+		var heroHeight = $('.header-3-hero').outerHeight();   // distance to scroll
+
+		/* toggle class on scroll */
+		$(window).on('scroll', function () {
+			if ($(this).scrollTop() >= heroHeight) {
+				$header.addClass('header-3--sticky');
+			} else {
+				$header.removeClass('header-3--sticky');
+			}
+		});
+
+	});
+</script>
+<section class="header-breadcrumb-section" style="background:url('assets/images/header-breadcrumb-section-bg.jpg') no-repeat center/cover;">
+<div class="container text-center">
+<h1 class="header-breadcrumb-section-title"><span class="Page_name">Page Name</span></h1>
+<p class="header-breadcrumb-section-breadcrumb">
+<a href="index.html">Home</a> &gt; <span class="Page_name">Page Name</span>
+</p>
+</div>
+</section>
