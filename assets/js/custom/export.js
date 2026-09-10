@@ -120,45 +120,104 @@ function injectCustomAlertCSS() {
     document.head.appendChild(style);
 }
 
-function showCustomAlertBox(type = 'error', message = 'Something went wrong', onOk) {
+function showCustomAlertBox(
+    type = "error",
+    message = "Something went wrong",
+    onConfirm = null,
+    confirmText = "OK",
+    cancelText = null
+) {
 
     injectCustomAlertCSS();
 
-    // normalize type
-    type = (type === 'success') ? 'success' : 'error';
+    type = (type === "success") ? "success" : "error";
 
-    // fallback message safety
-    if (!message || message.trim() === '') {
-        message = 'Something went wrong';
-    }
+    const backdrop = document.createElement("div");
+    backdrop.className = "custom-alert-backdrop show";
 
-    const backdrop = document.createElement('div');
-    backdrop.className = 'custom-alert-backdrop show';
-
-    const popup = document.createElement('div');
+    const popup = document.createElement("div");
     popup.className = `custom-alert-popup ${type} show`;
 
     popup.innerHTML = `
         <div class="custom-alert-content">
-            <div class="custom-alert-message">${message}</div>
-            <button class="custom-alert-ok-btn">OK</button>
+            <div class="custom-alert-message">
+                ${message}
+            </div>
+
+            <div class="custom-alert-buttons"
+                 style="
+                    display:flex;
+                    justify-content:center;
+                    gap:12px;
+                    margin-top:20px;
+                 ">
+
+                ${
+                    cancelText
+                    ? `
+                        <button
+                            type="button"
+                            class="custom-alert-cancel-btn"
+                            style="
+                                background:#eee;
+                                color:#333;
+                                border:none;
+                                padding:10px 28px;
+                                border-radius:230px;
+                                font-weight:600;
+                                font-size:15px;
+                                cursor:pointer;
+                            "
+                        >
+                            ${cancelText}
+                        </button>
+                    `
+                    : ""
+                }
+
+                <button
+                    type="button"
+                    class="custom-alert-ok-btn"
+                >
+                    ${confirmText}
+                </button>
+
+            </div>
         </div>
     `;
 
     document.body.appendChild(backdrop);
     document.body.appendChild(popup);
-    document.body.classList.add('custom-alert-open');
+    document.body.classList.add("custom-alert-open");
 
-    function close() {
+    function closeAlert() {
         backdrop.remove();
         popup.remove();
-        document.body.classList.remove('custom-alert-open');
-        if (typeof onOk === 'function') onOk();
+        document.body.classList.remove("custom-alert-open");
     }
 
-    popup.querySelector('.custom-alert-ok-btn').onclick = close;
-    backdrop.onclick = close;
+    popup.querySelector(".custom-alert-ok-btn").onclick = function () {
+        closeAlert();
+
+        if (typeof onConfirm === "function") {
+            onConfirm();
+        }
+    };
+
+    const cancelBtn =
+        popup.querySelector(".custom-alert-cancel-btn");
+
+    if (cancelBtn) {
+        cancelBtn.onclick = function () {
+            closeAlert();
+        };
+    }
+
+    backdrop.onclick = function () {
+        closeAlert();
+    };
 }
+
 
 // =========================================================
 
@@ -196,7 +255,7 @@ function displayLoadingMessage() {
 
 
 
-function createHTMLFilesDataForWebsiteLinks() {
+   function createHTMLFilesDataForWebsiteLinks() {
     // const SEOData = {
     //     // Local Businesses
     //     "Salon & Spa": {
@@ -455,13 +514,36 @@ function createHTMLFilesDataForWebsiteLinks() {
 
 
     var imagesNameList = "";
-const selectedThemeClass =
-    getCookie("selectedThemeClass") || "";
+const themeMode = getCookie("themeMode") || "default";
 
-    const clientEmail = getCookie("clientEmail") || "";
-    const clientMobile = getCookie("clientMobile") || "";
-    const clientAddress = getCookie("clientAddress") || "";
+let themeCSS = "";
 
+if(themeMode==="default"){
+
+    themeCSS="Default theme";
+
+}
+else{
+
+    const websiteThemeColor=getCookie("websiteThemeColor") || "#FFFFFF";
+
+    const themeData=generateThemeCSS(websiteThemeColor);
+
+    themeCSS=themeData.css;
+
+}
+
+const clientEmail = getCookie("clientEmail") || "";
+const clientMobile = getCookie("clientMobile") || "";
+const clientAddress = getCookie("clientAddress") || "";
+
+const clientFacebook = getCookie("clientFacebook") || "";
+const clientInstagram = getCookie("clientInstagram") || "";
+const clientLinkedin = getCookie("clientLinkedin") || "";
+const clientTwitter = getCookie("clientTwitter") || "";
+const clientYoutube = getCookie("clientYoutube") || "";
+const clientPinterest = getCookie("clientPinterest") || "";
+const clientWhatsapp = getCookie("clientWhatsapp") || "";
     // images from localStorage
     const logoImage = localStorage.getItem("logoImage") || "";
     const sliderImage = localStorage.getItem("sliderImage") || "";
@@ -573,19 +655,19 @@ const selectedThemeClass =
 
     // Generate Common Header with Menus for all the pages
     let headerSection = null;
-    let request_src = "section";
-
 
     if (headerTemplate) {
         // alert("Inside if111-----" + headerTemplate);
-        if (headerTemplate.includes("aig")) {
-            request_src = "ai_gen"
-        }
+
+
+        const header_request_src =
+            globalHeaderObj.isAI ? "ai_gen" : "section";
+
         const requestData = {
-            request_src: request_src,
+            request_src: header_request_src,
             section_path: headerTemplate,
             file_name: ""
-        }
+        };
 
         $.ajax({
             // url: headerTemplate,
@@ -600,6 +682,7 @@ const selectedThemeClass =
             },
 
             success: function (html) {
+
                 // alert("htmlNew"+html);
                 // const parsed = $(html);
 
@@ -671,16 +754,16 @@ const selectedThemeClass =
     // Generate Common Footer with Menus for all the pages
     // ===== LOAD FOOTER FROM TEMPLATE =====
     let footerSection = null;
-
     if (footerTemplate) {
-        if (footerTemplate.includes("aig")) {
-            request_src = "ai_gen"
-        }
+
+        const footer_request_src =
+            globalFooterObj.isAI ? "ai_gen" : "section";
+
         const requestData = {
-            request_src: request_src,
+            request_src: footer_request_src,
             section_path: footerTemplate,
             file_name: ""
-        }
+        };
         $.ajax({
             url: "/fetch_html_sections/",
             type: "POST",
@@ -758,6 +841,7 @@ const selectedThemeClass =
 
     function addImagesToList(imageUrl) {
         const imgName = imageUrl.split("assets/images/")[1];
+        // alert("Image URL: "+imageUrl + "------ Image Name: "+imgName)
         if (imgName && !imagesNameList.includes(imgName)) {
             imagesNameList += "," + imgName;
         }
@@ -788,7 +872,7 @@ const selectedThemeClass =
             const oldSrc = $(this).attr("src");
             if (oldSrc && (oldSrc.endsWith(".jpeg") || oldSrc.endsWith(".JPG") || oldSrc.endsWith(".jpg") || oldSrc.endsWith(".png") || oldSrc.endsWith(".svg"))) {
                 // Check if the src contains 'assets/images/' and replace it
-                if (oldSrc.includes("assets/images/")) {
+                if (oldSrc.includes("assets/images/") ) {
                     //const newSrc = oldSrc.replace("assets/images/", `assets/clients/${clientName}/${clientProjectName}/images/`);
                     const newSrc = oldSrc.replace("assets/images/", `assets/images/`);
                     $(this).attr("src", newSrc); // Update the src attribute
@@ -812,15 +896,7 @@ const selectedThemeClass =
                 }
             }
 
-            // Remove theme classes
-            const classNames = $(this).attr('class');
-            if (classNames) {
-                classNames.split(' ').forEach((className) => {
-                    if (className.startsWith('theme-')) {
-                        $(this).removeClass(className);
-                    }
-                });
-            }
+
         });
     }
 
@@ -978,32 +1054,42 @@ const selectedThemeClass =
             let sectionClone = null;
 
             const originalSection =
-                document.getElementById(sectionId) ||
+                  document.getElementById(sectionId) ||
                 document.querySelector(`[id^="${sectionId}"]`);
-            const isAI = templatePath && templatePath.includes("/generated_sections/");
+                const isAI = templatePath && templatePath.includes("_aig");
+                            if (originalSection && !isAI) {
 
-            if (originalSection && !isAI) {
+                    const wrapper = $(originalSection).closest('.section-wrapper');
 
-                const wrapper = $(originalSection).closest('.section-wrapper');
+                    if (wrapper.length) {
+                        sectionClone = wrapper.clone();
+                    } else {
+                        sectionClone = $(originalSection).clone();
+                    }
 
-                if (wrapper.length) {
-                    sectionClone = wrapper.clone();
-                } else {
-                    sectionClone = $(originalSection).clone();
-                }
+                    sectionClone.find(".ai-generated-wrapper").remove();
 
-            } else if (templatePath) {
+                }else if (templatePath) {
 
+                // if (templatePath.includes("aig")) {
+                //     request_src = "ai_gen"
+                // }
+                // const requestData = {
+                //     request_src: request_src,
+                //     section_path: templatePath,
+                //     file_name: ""
+                // }
+                let request_src = "section";
 
                 if (templatePath.includes("aig")) {
-                    request_src = "ai_gen"
+                    request_src = "ai_gen";
                 }
+
                 const requestData = {
                     request_src: request_src,
                     section_path: templatePath,
                     file_name: ""
-                }
-
+                };
                 $.ajax({
                     // url: templatePath,
                     // type: "GET",
@@ -1095,33 +1181,84 @@ const selectedThemeClass =
             // Email
             if (clientEmail?.trim()) {
                 sectionClone.find(".client_email").each(function () {
-                    $(this).text(clientEmail);
+                    $(this)
+                        .text(clientEmail)
+                        .attr("href", "mailto:" + clientEmail);
                 });
             }
 
             // Mobile
             if (clientMobile?.trim()) {
+                const cleanMobile = clientMobile.replace(/[^\d+]/g, "");
                 sectionClone.find(".client_mobile").each(function () {
-                    $(this).text(clientMobile);
+                    $(this)
+                        .text(clientMobile)
+                        .attr("href", "tel:" + cleanMobile);
                 });
             }
-            // Whtasapp
-            // const mobile = getCookie("clientMobile");
 
-            // if (mobile && mobile.trim() !== "") {
-            //     const cleanNumber = mobile.replace(/\D/g, "");
-            //     $(".whatsapp-float")
-            //         .attr("href", `https://wa.me/${cleanNumber}`)
-            //         .show();
-            // } else {
-            //     $(".whatsapp-float").hide();
-            // }
             // Address
             if (clientAddress?.trim()) {
+                // Encode address for Google Maps URL
+                const mapAddress = encodeURIComponent(clientAddress);
+
                 sectionClone.find(".client_address").each(function () {
-                    $(this).text(clientAddress);
+                    $(this)
+                        .text(clientAddress)
+                        .attr("href", `https://www.google.com/maps/search/?api=1&query=${mapAddress}`);
                 });
             }
+
+            // Whatsapp
+            if (clientWhatsapp?.trim()) {
+                sectionClone.find(".client_whatsapp").each(function () {
+                    $(this).attr("href", clientWhatsapp);
+                });
+            }
+
+            // Facebook
+            if (clientFacebook?.trim()) {
+                sectionClone.find(".client_facebook").each(function () {
+                    $(this).attr("href", clientFacebook);
+                });
+            }
+
+            // Instagram
+            if (clientInstagram?.trim()) {
+                sectionClone.find(".client_instagram").each(function () {
+                    $(this).attr("href", clientInstagram);
+                });
+            }
+
+            // LinkedIn
+            if (clientLinkedin?.trim()) {
+                sectionClone.find(".client_linkedin").each(function () {
+                    $(this).attr("href", clientLinkedin);
+                });
+            }
+
+            // X / Twitter
+            if (clientTwitter?.trim()) {
+                sectionClone.find(".client_twitter").each(function () {
+                    $(this).attr("href", clientTwitter);
+                });
+            }
+
+            // YouTube
+            if (clientYoutube?.trim()) {
+                sectionClone.find(".client_youtube").each(function () {
+                    $(this).attr("href", clientYoutube);
+                });
+            }
+
+            // Pinterest
+            if (clientPinterest?.trim()) {
+                sectionClone.find(".client_pinterest").each(function () {
+                    $(this).attr("href", clientPinterest);
+                });
+            }
+
+
 
             // Logo Image
             if (logoImage && logoImage.startsWith("data:image")) {
@@ -1145,64 +1282,59 @@ const selectedThemeClass =
         let headerFont = $("." + globalHeader).css("font-family") || "'Roboto', sans-serif";
 
         // const seoInfo = SEOData[headerCategory] || { keywords: "", description: "" };
- let seoTitle = fileName || "Home";
-let seoDescription = "";
-let seoKeywords = "";
+        let seoTitle = fileName || "Home";
+        let seoDescription = "";
+        let seoKeywords = "";
 
-try {
+        try {
 
-    const currentPageSEO =
-        localStorage.getItem(`seo_${pageName}`);
+            const currentPageSEO =
+                localStorage.getItem(`seo_${pageName}`);
 
-    if (
-        currentPageSEO &&
-        typeof currentPageSEO === "string"
-    ) {
+            if (
+                currentPageSEO &&
+                typeof currentPageSEO === "string"
+            ) {
 
-        const titleMatch =
-            currentPageSEO.match(/SEO Title:\s*(.*)/i);
+                const titleMatch =
+                    currentPageSEO.match(/SEO Title:\s*(.*)/i);
 
-        const descMatch =
-            currentPageSEO.match(/Meta Description:\s*(.*)/i);
+                const descMatch =
+                    currentPageSEO.match(/Meta Description:\s*(.*)/i);
 
-        const keywordMatch =
-            currentPageSEO.match(/Focus Keywords:\s*(.*)/i);
+                const keywordMatch =
+                    currentPageSEO.match(/Focus Keywords:\s*(.*)/i);
 
-function cleanSEOText(text = "") {
+                function cleanSEOText(text = "") {
 
-    return text
-        .replace(/\*\*/g, '')
-        .replace(/^["']+|["']+$/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-}
+                    return text
+                        .replace(/\*\*/g, '')
+                        .replace(/^["']+|["']+$/g, '')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                }
 
-seoTitle =
-    cleanSEOText(
-        titleMatch?.[1] || fileName
-    );
+                seoTitle =
+                    cleanSEOText(
+                        titleMatch?.[1] || fileName
+                    );
 
-seoDescription =
-    cleanSEOText(
-        descMatch?.[1] || ""
-    );
+                seoDescription =
+                    cleanSEOText(
+                        descMatch?.[1] || ""
+                    );
 
-seoKeywords =
-    cleanSEOText(
-        keywordMatch?.[1] || ""
-    );
-    }
+                seoKeywords =
+                    cleanSEOText(
+                        keywordMatch?.[1] || ""
+                    );
+            }
 
-} catch(e) {
+        } catch (e) {
 
-    console.log("SEO ERROR", e);
+            console.log("SEO ERROR", e);
 
-}
-        //whatsapp replace mobile number
-        const cleanWhatsapp = (clientMobile || "").replace(/\D/g, "");
-        const whatsappLink = cleanWhatsapp
-            ? `https://wa.me/${cleanWhatsapp}`
-            : "https://wa.me/";
+        }
 
         const newPageContent = `
         <!DOCTYPE html>
@@ -1227,28 +1359,38 @@ seoKeywords =
 	        <link rel="stylesheet" href="assets/css/custom-Imports.css">
             <link rel="stylesheet" href="assets/css/custom/editmode.css">
             <link rel="stylesheet" href="assets/css/resonsive.css">
+            <link rel="stylesheet" href="/media/projects/${clientName}/${clientProjectName}/assets/css/custom-theme-color.css">
+            <link rel="stylesheet" href="assets/css/custom-theme-color.css">
+
             	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
 	<link rel="stylesheet"
 		href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
-        <style>
-            :root {
-                --site-font: ${headerFont};
-            }
-            body, #wrapper, #wrapper * {
-                font-family: var(--site-font) !important;
-            }
-        </style>
+<style>
+        :root {
+            --site-font:${headerFont};
+        }
+
+        body,
+        #wrapper,
+        #wrapper *:not(i):not([class^="ri-"]):not([class*=" ri-"]) {
+            font-family: var(--site-font);
+        }
+    </style>
+
+<link rel="stylesheet" href="assets/css/custom-theme-colors.css">
         </head>
-        <body class="${selectedThemeClass}">
+        <body >
             <div id="wrapper">
             <div id="header" data-src="header.html"></div>
             <div id="mainPageContent">${pageContent}</div>
             <div id="footer" data-src="footer.html"></div>
 
             </div>
-            <a href="${whatsappLink}" class="whatsapp-float" target="_blank">
-                <i class="ri-whatsapp-line"></i>
-            </a>
+            ${clientWhatsapp?.trim() ? `
+            <a href="${clientWhatsapp}" class="whatsapp-float client_whatsapp" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+                <i class="ri-whatsapp-line icon-float"></i>
+                </a>
+            ` : ""}
             <script src="assets/js/jquery.js"></script>
             <script src="assets/js/middle-section.js"></script>
             <script src="assets/js/init.js"></script>
@@ -1259,7 +1401,7 @@ seoKeywords =
             <script src="assets/js/Observer.min.js"></script>
             <script src="assets/js/gsap.effects.js"></script>
             <script src="assets/js/common_js/send_email.js"></script>
-
+            <script src="https://colorjs.io/dist/color.global.js"></script>
             <script src="assets/js/common_js/html_image_editor.js"></script>
             <script src="assets/js/common_js/windows_postmessage.js"></script>
 
@@ -1482,33 +1624,83 @@ seoKeywords =
             // Email
             if (clientEmail?.trim()) {
                 sectionClone.find(".client_email").each(function () {
-                    $(this).text(clientEmail);
+                    $(this)
+                        .text(clientEmail)
+                        .attr("href", "mailto:" + clientEmail);
                 });
             }
 
             // Mobile
             if (clientMobile?.trim()) {
+                const cleanMobile = clientMobile.replace(/[^\d+]/g, "");
                 sectionClone.find(".client_mobile").each(function () {
-                    $(this).text(clientMobile);
+                    $(this)
+                        .text(clientMobile)
+                        .attr("href", "tel:" + cleanMobile);
                 });
             }
-            // Whtasapp
-            // const mobile = getCookie("clientMobile");
 
-            // if (mobile && mobile.trim() !== "") {
-            //     const cleanNumber = mobile.replace(/\D/g, "");
-            //     $(".whatsapp-float")
-            //         .attr("href", `https://wa.me/${cleanNumber}`)
-            //         .show();
-            // } else {
-            //     $(".whatsapp-float").hide();
-            // }
             // Address
             if (clientAddress?.trim()) {
+
+                const mapAddress = encodeURIComponent(clientAddress);
+
                 sectionClone.find(".client_address").each(function () {
-                    $(this).text(clientAddress);
+                    $(this)
+                        .text(clientAddress)
+                        .attr("href", `https://www.google.com/maps/search/?api=1&query=${mapAddress}`);
                 });
             }
+
+
+            // Whatsapp
+            if (clientWhatsapp?.trim()) {
+                sectionClone.find(".client_whatsapp").each(function () {
+                    $(this).attr("href", clientWhatsapp);
+                });
+            }
+
+        // Facebook
+        if (clientFacebook?.trim()) {
+            sectionClone.find(".client_facebook").each(function () {
+                $(this).attr("href", clientFacebook);
+            });
+        }
+
+        // Instagram
+        if (clientInstagram?.trim()) {
+            sectionClone.find(".client_instagram").each(function () {
+                $(this).attr("href", clientInstagram);
+            });
+        }
+
+        // LinkedIn
+        if (clientLinkedin?.trim()) {
+            sectionClone.find(".client_linkedin").each(function () {
+                $(this).attr("href", clientLinkedin);
+            });
+        }
+
+        // X / Twitter
+        if (clientTwitter?.trim()) {
+            sectionClone.find(".client_twitter").each(function () {
+                $(this).attr("href", clientTwitter);
+            });
+        }
+
+        // YouTube
+        if (clientYoutube?.trim()) {
+            sectionClone.find(".client_youtube").each(function () {
+                $(this).attr("href", clientYoutube);
+            });
+        }
+
+        // Pinterest
+        if (clientPinterest?.trim()) {
+            sectionClone.find(".client_pinterest").each(function () {
+                $(this).attr("href", clientPinterest);
+            });
+        }
 
             // Logo Image
             if (logoImage && logoImage.startsWith("data:image")) {
@@ -1530,61 +1722,59 @@ seoKeywords =
         });
         let headerFont = $("." + globalHeader).css("font-family") || "'Roboto', sans-serif";
         // const seoInfo = SEOData[headerCategory] || { keywords: "", description: "" };
-let seoTitle = fileName || "Home";
-let seoDescription = "";
-let seoKeywords = "";
+        let seoTitle = fileName || "Home";
+        let seoDescription = "";
+        let seoKeywords = "";
 
-try {
+        try {
 
-    const currentPageSEO =
-        localStorage.getItem(`seo_${pageName}`);
+            const currentPageSEO =
+                localStorage.getItem(`seo_${pageName}`);
 
-    if (
-        currentPageSEO &&
-        typeof currentPageSEO === "string"
-    ) {
+            if (
+                currentPageSEO &&
+                typeof currentPageSEO === "string"
+            ) {
 
-        const titleMatch =
-            currentPageSEO.match(/SEO Title:\s*(.*)/i);
+                const titleMatch =
+                    currentPageSEO.match(/SEO Title:\s*(.*)/i);
 
-        const descMatch =
-            currentPageSEO.match(/Meta Description:\s*(.*)/i);
+                const descMatch =
+                    currentPageSEO.match(/Meta Description:\s*(.*)/i);
 
-        const keywordMatch =
-            currentPageSEO.match(/Focus Keywords:\s*(.*)/i);
+                const keywordMatch =
+                    currentPageSEO.match(/Focus Keywords:\s*(.*)/i);
 
-function cleanSEOText(text = "") {
+                function cleanSEOText(text = "") {
 
-    return text
-        .replace(/\*\*/g, '')
-        .replace(/^["']+|["']+$/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-}
+                    return text
+                        .replace(/\*\*/g, '')
+                        .replace(/^["']+|["']+$/g, '')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                }
 
-seoTitle =
-    cleanSEOText(
-        titleMatch?.[1] || fileName
-    );
+                seoTitle =
+                    cleanSEOText(
+                        titleMatch?.[1] || fileName
+                    );
 
-seoDescription =
-    cleanSEOText(
-        descMatch?.[1] || ""
-    );
+                seoDescription =
+                    cleanSEOText(
+                        descMatch?.[1] || ""
+                    );
 
-seoKeywords =
-    cleanSEOText(
-        keywordMatch?.[1] || ""
-    );
-    }
+                seoKeywords =
+                    cleanSEOText(
+                        keywordMatch?.[1] || ""
+                    );
+            }
 
-} catch(e) {
+        } catch (e) {
 
-    console.log("SEO ERROR", e);
+            console.log("SEO ERROR", e);
 
-}
-        const cleanWhatsapp = (clientMobile || "").replace(/\D/g, "");
-        const whatsappLink = cleanWhatsapp ? `https://wa.me/${cleanWhatsapp}` : "#";
+        }
 
         const newPageContent = `
         <!DOCTYPE html>
@@ -1609,30 +1799,39 @@ seoKeywords =
             <link rel="stylesheet" href="assets/css/custom-Imports.css">
             <link rel="stylesheet" href="assets/css/custom/editmode.css">
             <link rel="stylesheet" href="assets/css/resonsive.css">
+            <link rel="stylesheet" href="/media/projects/${clientName}/${clientProjectName}/assets/css/custom-theme-color.css">
+            <link rel="stylesheet" href="assets/css/custom-theme-color.css">
 
-
-            	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
 	<link rel="stylesheet"
 		href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
-                <style>
-            :root {
-                --site-font: ${headerFont};
-            }
-            body, #wrapper, #wrapper * {
-                font-family: var(--site-font) !important;
-            }
-        </style>
+    <link rel="stylesheet" href="assets/css/custom-theme-colors.css">
+
+<style>
+        :root {
+            --site-font:${headerFont};
+        }
+
+        body,
+        #wrapper,
+        #wrapper *:not(i):not([class^="ri-"]):not([class*=" ri-"]) {
+            font-family: var(--site-font);
+        }
+    </style>
+
         </head>
-       <body class="${selectedThemeClass}">
+       <body >
             <div id="wrapper">
             <div id="header" data-src="header.html"></div>
             <div id="mainPageContent">${pageContent}</div>
             <div id="footer" data-src="footer.html"></div>
 
             </div>
-            <a href="${whatsappLink}" class="whatsapp-float" target="_blank">
-                <i class="ri-whatsapp-line"></i>
+            ${clientWhatsapp?.trim() ? `
+            <a href="${clientWhatsapp}" class="whatsapp-float client_whatsapp" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+                <i class="ri-whatsapp-line icon-float"></i>
             </a>
+        ` : ""}
             <script src="assets/js/jquery.js"></script>
             <script src="assets/js/middle-section.js"></script>
             <script src="assets/js/init.js"></script>
@@ -1642,7 +1841,7 @@ seoKeywords =
             <script src="assets/js/ScrollTrigger.min.js"></script>
             <script src="assets/js/Observer.min.js"></script>
             <script src="assets/js/gsap.effects.js"></script>
-
+            <script src="https://colorjs.io/dist/color.global.js"></script>
 
             <script src="assets/js/common_js/send_email.js"></script>
 
@@ -1711,15 +1910,112 @@ seoKeywords =
 
     });
     filesDetailsMap["imagesNameList"] = imagesNameList;
+
+
+    // alert("Theme Css before creating theme.css: " + JSON.stringify(themeCSS));
+    console.log("websiteThemeColor =", getCookie("websiteThemeColor"));
+
+
+    let requiredCSS = new Set();
+
+    requiredCSS.add("assets/css/style.css");
+    requiredCSS.add("assets/css/middle_sections.css");
+    requiredCSS.add("assets/css/anim-effects.css");
+    requiredCSS.add("assets/css/bootstrap.css");
+    requiredCSS.add("assets/css/plugins.css");
+    requiredCSS.add("assets/css/custom-Imports.css");
+    requiredCSS.add("assets/css/resonsive.css");
+
+    if (globalHeader) {
+        requiredCSS.add(
+            `assets/css/components/${globalHeader}.css`
+        );
+    }
+
+    if (globalFooter) {
+        requiredCSS.add(
+            `assets/css/components/${globalFooter}.css`
+        );
+    }
+
+    function addMiddleSectionCSS(pageList) {
+        pageList.forEach(pageName => {
+            let availableMiddleSectionsForPage = middleSections[pageName] || [];
+            availableMiddleSectionsForPage.forEach(section => {
+                if (section.id) {
+                    requiredCSS.add(
+                        `assets/css/components/${section.id}.css`
+                    );
+                }
+            });
+        });
+    }
+
+    addMiddleSectionCSS(headerPages);
+    addMiddleSectionCSS(filteredFooterPages);
+
+
+
+
+    // let excludedJS = new Set();
+
+    // excludedJS.add("assets/js/editmode.js");
+    // excludedJS.add("assets/js/editModeScript.js");
+    // excludedJS.add("assets/js/export.js");
+    // excludedJS.add("assets/js/main.js");
+    // excludedJS.add("assets/js/preview-site.js");
+
+    // window.excludedJSFiles = Array.from(excludedJS);
+
+    // alert("excludedjsfiles-----\n" + excludedjsfiles.join("\n"));
+
+    // // filesDetailsMap["excludedJSFiles"] = excludedjsfiles;
+
+
+    // window.requiredCSSFiles = Array.from(requiredCSS);
+
+    // alert("cssFilesArray-----"+ cssFilesArray.join("\n"));
+
+    // filesDetailsMap["requiredCSSFiles"] = cssFilesArray;
+
     uploadFilesData(filesDetailsMap);
 }
 function uploadFilesData(filesDetailsMap) {
     displayLoadingMessage();
-    $("#uploadBtn").show();
+    $("#publishClienthWebsite").show();
     $("#publishBtnSales").show();
+
+
+const themeMode = getCookie("themeMode") || "default";
+
+let themeCSS = "";
+
+if (themeMode === "default") {
+
+    themeCSS = "Default theme";
+
+} else {
+
+    const websiteThemeColor = getCookie("websiteThemeColor") || "#FFFFFF";
+
+    const themeData = generateThemeCSS(websiteThemeColor);
+
+    themeCSS = themeData.css;
+
+}
+
 
     filesDetailsMap["clientName"] = getCookie("clientName");
     filesDetailsMap["clientProjectName"] = getCookie("projectName");
+    // filesDetailsMap["themeCSS"] = themeCSS;
+    filesDetailsMap["Is_ai_generated_image_processed"] =
+    getCookie("Is_ai_generated_image_processed") || "no";
+
+
+    console.log(
+        "Is_ai_generated_image_processed:",
+        filesDetailsMap["Is_ai_generated_image_processed"]
+    );
     // filesDetailsMap["reqFor"] =  "preview";
     console.log("clientName:", getCookie("clientName"));
     console.log("projectName:", getCookie("projectName"));
@@ -1755,6 +2051,7 @@ function openPreview() {
     var filename = "index.html";
     var clientName = getCookie('clientName');
     var clientProjectName = getCookie('projectName');
+// alert("middle_AI_generated_sections---"+ getCookie('middle_AI_generated_sections'));
 
     setCookie('preview', 'true', 7);
     var newTab = window.open("", "_blank");
@@ -2158,68 +2455,140 @@ function generateFooterLinks() {
 }
 
 
-// Theme Selector code
-let selectedThemeClass = '';
 
-const themes = {
-    'theme-1': { primary: '#0f6979', secondary: '#ffc000', tertiary: '#ffffff' },
-    'theme-2': { primary: '#283259', secondary: '#1da6a6', tertiary: '#ffffff' },
-    'theme-3': { primary: '#1d4d13', secondary: '#f4a300', tertiary: '#ffffff' },
-    'theme-4': { primary: '#ffc000', secondary: '#ffffff', tertiary: '#000000' },
-    'theme-5': { primary: '#f0f8ff', secondary: '#59bb2c', tertiary: '#000000' },
-    'theme-6': { primary: '#0caa85', secondary: '#f4a300', tertiary: '#ffffff' },
-};
 
-// Function to update the theme color preview
-function updateThemePreview(theme) {
-    const colors = themes[theme] || { primary: '#ffffff', secondary: '#000000', tertiary: '#ffffff' };
-    $('#theme-preview .primary').css('background-color', colors.primary);
-    $('#theme-preview .secondary').css('background-color', colors.secondary);
-    $('#theme-preview .tertiary').css('background-color', colors.tertiary);
-}
 
-// When dropdown value changes
-$('#theme-dropdown').on('change', function () {
-    selectedThemeClass = $(this).val();
-    if (selectedThemeClass) {
-        updateThemePreview(selectedThemeClass);
-        $('#theme-preview').show();
-    } else {
-        $('#theme-preview').hide();
-    }
-});
 
-// When switching to the Theme tab
-$('a[href="#tab-theme"]').on('shown.bs.tab', function () {
-    // Set default theme if none selected
-    if (!selectedThemeClass) {
-        selectedThemeClass = 'theme-1';
-        $('#theme-dropdown').val('theme-1');
-    }
-    updateThemePreview(selectedThemeClass);
-    $('#theme-preview').show();
-});
 
 // On export button click
-$('#export-btn').off('click').on('click', function () {
+$(document).off('click.exportSEO', '#export-btn').on('click.exportSEO', '#export-btn', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
 
     const clientName = getCookie("clientName");
     const projectName = getCookie("projectName");
-    let theme = selectedThemeClass || 'theme-1';
 
     if (!clientName || !projectName) {
         alert("Client and Project details missing. Please fill them first.");
         return;
     }
 
-    if (!theme) {
-        theme = 'theme-1';
-        setCookie('selectedTheme', theme, 7);
-        console.log('No theme selected. Defaulting to theme-1.');
+    const hasSEOData =
+        typeof seoGeneratedData !== "undefined" &&
+        seoGeneratedData &&
+        typeof seoGeneratedData === "object" &&
+        Object.keys(seoGeneratedData).length > 0;
+
+    if (!hasSEOData) {
+        createHTMLFilesDataForWebsiteLinks();
+        return;
     }
 
-    // preview handled by preview shell now
-    createHTMLFilesDataForWebsiteLinks(theme);
+    const oldPopup = document.getElementById("seo-export-warning");
+    if (oldPopup) {
+        oldPopup.remove();
+    }
+
+    const popup = document.createElement("div");
+    popup.id = "seo-export-warning";
+
+    popup.style.cssText = `
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999999999;
+        font-family:'quicksand', sans-serif;
+    `;
+
+    popup.innerHTML = `
+        <div style="
+            width: 420px;
+            max-width: calc(100% - 30px);
+            background: #fff;
+            border-radius: 14px;
+            padding: 28px;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+
+        ">
+            <div style="
+                font-size: 18px;
+                font-weight: 600;
+                color: #222;
+                margin-bottom: 12px;
+            ">
+                Warning
+            </div>
+
+            <div style="
+                font-size: 14px;
+                line-height: 1.6;
+                color: #555;
+                margin-bottom: 24px;
+                font-family:'quicksand', sans-serif;
+            ">
+                Your generated SEO data will be lost if you continue.
+                Do you want to go ahead?
+            </div>
+
+            <div style="
+                display: flex;
+                justify-content: center;
+                gap: 12px;
+            ">
+                <button type="button" id="seo-export-cancel" style="
+                    min-width: 110px;
+                    padding: 8px 20px;
+                    border: 1px solid #ddd;
+                    border-radius: 30px;
+                    background: #f5f5f5;
+                    color: #333;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                ">
+                    Cancel
+                </button>
+
+                <button type="button" id="seo-export-go-ahead" style="
+                    min-width: 110px;
+                    padding: 8px 20px;
+                    border: none;
+                    border-radius: 30px;
+                    background: #222;
+                    color: #fff;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    background: linear-gradient(135deg, #e39a4e, #fb1b1b);
+                ">
+                    Go Ahead
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(popup);
+
+    document.getElementById("seo-export-cancel").onclick = function () {
+        popup.remove();
+    };
+
+    document.getElementById("seo-export-go-ahead").onclick = function () {
+        seoGeneratedData = {};
+        seoDataCapture = "No";
+        window.seoGenerated = false;
+
+        popup.remove();
+
+        createHTMLFilesDataForWebsiteLinks();
+    };
 });
 
 // $('#export-btn').on('click', function () {
