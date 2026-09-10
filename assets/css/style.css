@@ -15856,7 +15856,8 @@ s .main-header .main-box .logo-box .logo img {
       font-size: 18px;
     }
     .alert {
-      padding: 19px 30px;
+      padding: 5px 10px;
+    border-radius: 8px;
     }
     /* .header-holder {
       padding-bottom: 25px;
