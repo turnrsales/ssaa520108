@@ -134,6 +134,7 @@ function getCookie(name) {
 
 let currentSection = null;
 let generatedText = "";
+let updateImagesOnlyMode = false;
 
 const style = document.createElement("style");
 style.innerHTML = `
@@ -205,9 +206,8 @@ style.innerHTML = `
   zoom:0.67;
 }
 
-    .ai-tab-content img{
+.ai-tab-content img{
     max-width:100% !important;
-    height:auto;
 }
 
 .ai-tab-content .container,
@@ -242,7 +242,8 @@ style.innerHTML = `
 }
 
 #ai-generate,
-#ai-apply{
+#ai-apply,
+#ai-update-images-only{
   background: linear-gradient(90deg, #F28F32 0%, #a73729 100%);
   color:#fff;
   border-radius:30px;
@@ -567,11 +568,13 @@ modal.innerHTML = `
 
     </div>
 
-    <div class="ai-actions">
-        <button id="ai-generate" class="ai-btn">Generate</button>
-        <button id="ai-apply" class="ai-btn">Update Changes</button>
-        <button id="edit-images" class="ai-btn">Edit Images</button>
-    </div>
+<div class="ai-actions">
+    <button id="ai-generate" class="ai-btn">Generate Content and Update Images</button>
+    <button id="ai-update-images-only" class="ai-btn">Update Images only</button>
+    <button id="edit-images" class="ai-btn">Edit Images</button>
+    <button id="ai-apply" class="ai-btn">Apply Changes</button>
+
+</div>
 
 </div>
 `;
@@ -607,6 +610,7 @@ $(document).on("click", "#ai-close-x", function () {
         ? $("#ai-generated")
         : $("#ai-original");
     resetImageEditMode(container);
+    updateImagesOnlyMode = false;
     delete sectionFileMap[currentSection];
     modal.style.display = "none";
 });
@@ -647,7 +651,9 @@ const selectedCategory = getCookie("selectedCategory") || "" ;
                 html: htmlContent,
                 sectionId: currentSection,
                 categoryName: selectedCategory,
-                src: srcType
+                src: srcType,
+                client: getCookie("clientName"),
+                project: getCookie("projectName")
             })
         });
 
@@ -677,6 +683,53 @@ const selectedCategory = getCookie("selectedCategory") || "" ;
         applyBtn.style.display = "inline-block";
     }
 };
+
+document.getElementById("ai-update-images-only").onclick = async function () {
+
+    updateImagesOnlyMode = true;
+
+    const htmlContent = document.getElementById("ai-original").innerHTML;
+
+    document.getElementById("ai-generated").innerHTML = htmlContent;
+
+    document.querySelector('[data-tab="generated"]').style.display = "block";
+    document.querySelector('[data-tab="generated"]').click();
+
+    updateActionButtons("generated");
+
+    try {
+
+        const formData = new FormData();
+
+        formData.append("sectionId", currentSection);
+        formData.append("html", htmlContent);
+        formData.append("client", getCookie("clientName"));
+        formData.append("project", getCookie("projectName"));
+
+        const response = await fetch("/ai/save_section/", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": getCookie("csrftoken")
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || "Failed to create AI section file");
+        }
+
+        sectionFileMap[currentSection] = {
+            temp: data.file
+        };
+
+    } catch (error) {
+        console.error("AI section file creation failed:", error);
+    }
+};
+
+
 // document.getElementById("ai-generate").onclick = function(){
 
 //     const htmlContent = document.getElementById("ai-original").innerHTML;
@@ -963,7 +1016,7 @@ $(document).on("change",".section-checkbox",function(){
 
 // EDITING IMAGE
 let allImageElements = [];
-let imageMetaMap = new Map();
+
 
 $("#edit-images").on("click", function () {
 
@@ -1039,16 +1092,6 @@ $("#edit-images").on("click", function () {
 
     imageMetaMap = new Map();
 
-    allImageElements.forEach(item => {
-        const rect = item.el.getBoundingClientRect();
-
-        imageMetaMap.set(item.el, {
-            width: rect.width,
-            height: rect.height,
-            aspectRatio: rect.width / rect.height,
-            originalSrc: item.src
-        });
-    });
 
 });
 
@@ -1371,29 +1414,11 @@ $(document).on("click", "#confirmImage", async function () {
 
     const dims = imageMetaMap.get(currentEditingImg) || {};
 
-    if (item.type === "img") {
+if (item.type === "img") {
 
-        $el.attr("src", selectedImageSrc);
+    $el.attr("src", selectedImageSrc);
 
-    const dims = imageMetaMap.get(currentEditingImg) || {};
-
-        $el.attr("src", selectedImageSrc);
-
-        if (dims.width && dims.height) {
-            $el.css({
-                width: dims.width + "px",
-                height: dims.height + "px",
-                objectFit: "cover"
-            });
-        } else {
-            $el.css({
-                maxWidth: "100%",
-                height: "auto",
-                objectFit: "contain"
-            });
-        }
-
-    } else {
+}else {
 
         const el = currentEditingImg;
 
@@ -1483,21 +1508,22 @@ $(document).on("click", "#cancelImage, .close", function () {
 
 function updateActionButtons(tab){
     const generateBtn = document.getElementById("ai-generate");
+    const updateImagesBtn = document.getElementById("ai-update-images-only");
     const applyBtn = document.getElementById("ai-apply");
     const editBtn = document.getElementById("edit-images");
 
     if(tab === "original"){
-        generateBtn.innerText = "Generate";
-
+        generateBtn.innerText = "Generate Content and Update Images";
+        generateBtn.style.display = "inline-block";
+        updateImagesBtn.style.display = "inline-block";
         applyBtn.style.display = "none";
         editBtn.style.display = "none";
-
     }else{
+        generateBtn.style.display = updateImagesOnlyMode ? "none" : "inline-block";
+        updateImagesBtn.style.display = "none";
         generateBtn.innerText = "Regenerate";
-
-        applyBtn.innerText = "Update Changes";
+        applyBtn.innerText = "Apply Changes";
         applyBtn.style.display = "inline-block";
-
         editBtn.style.display = "inline-block";
     }
 }
