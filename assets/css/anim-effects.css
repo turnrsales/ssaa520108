@@ -1,0 +1,281 @@
+#dynamicModal [class*="anim-"]{
+
+    transform:none !important;
+    filter:none !important;
+    animation:none !important;
+    transition:none !important;
+    visibility:visible !important;
+}
+#dynamicModal .anim-slide-up{
+
+    transform:none !important;
+}
+/* Slide */
+
+.anim-slide-up{
+
+    transform:translateY(60px);
+    transition:all 1.8s ease;
+}
+
+.anim-slide-up.in-view{
+
+    transform:translateY(0);
+}
+.anim-slide-down{
+
+    transform:translateY(-60px);
+    transition:all 1.8s ease;
+}
+.anim-slide-down.in-view{
+
+    transform:translateY(0);
+}
+
+.anim-slide-left{
+
+    transform:translateX(60px);
+    transition:all 1.8s ease;
+}
+.anim-slide-left.in-view{
+
+    transform:translateX(0);
+}
+
+.anim-slide-right{
+
+    transform:translateX(-60px);
+    transition:all 1.8s ease;
+}
+.anim-slide-right.in-view{
+
+    transform:translateX(0);
+}
+
+/* Fade */
+
+.anim-fade-in{
+
+    transition:all 1.8s ease;
+}
+.anim-fade-in.in-view{
+
+}
+
+/* Zoom */
+
+.anim-zoom-in{
+
+    transform:scale(.85);
+    transition:all 1.8s ease;
+}
+.anim-zoom-in.in-view{
+
+    transform:scale(1);
+}
+
+/* Rotate */
+
+.anim-rotate-in{
+
+    transform:rotate(-15deg);
+    transition:all 1.8s ease;
+}
+.anim-rotate-in.in-view{
+
+    transform:rotate(0deg);
+}
+
+/* Flip */
+
+.anim-flip-in{
+
+    transform:rotateY(90deg);
+    transition:all 1.8s ease;
+    transform-style:preserve-3d;
+    backface-visibility:hidden;
+}
+.anim-flip-in.in-view{
+
+    transform:rotateY(0deg);
+}
+
+/* Bounce */
+
+.anim-bounce-in{
+
+    transform:translateY(100px);
+    transition:all .9s cubic-bezier(.68,-0.55,.27,1.55);
+}
+.anim-bounce-in.in-view{
+
+    transform:translateY(0);
+}
+
+/* Blur */
+
+.anim-blur-in{
+
+    filter:blur(6px);
+    transition:all 1s ease;
+}
+.anim-blur-in.in-view{
+
+    filter:blur(0);
+}
+
+/* Stripe */
+
+.anim-stripe-reveal{
+
+    transition:all 1.6s ease;
+
+    mask-image:repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 12px,
+        black 12px,
+        black 24px
+    );
+
+    -webkit-mask-image:repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 12px,
+        black 12px,
+        black 24px
+    );
+}
+
+.anim-stripe-reveal.in-view{
+
+    mask-image:none;
+    -webkit-mask-image:none;
+}
+
+/* Flip 3D */
+
+.anim-flip3d-left{
+
+    transform:perspective(800px) rotateY(90deg);
+    transition:all 1.6s ease;
+}
+.anim-flip3d-left.in-view{
+
+    transform:perspective(800px) rotateY(0);
+}
+
+.anim-flip3d-right{
+
+    transform:perspective(800px) rotateY(-90deg);
+    transition:all 1.6s ease;
+}
+.anim-flip3d-right.in-view{
+
+    transform:perspective(800px) rotateY(0);
+}
+
+.anim-flip3d-up{
+
+    transform:perspective(800px) rotateX(90deg);
+    transition:all 1.6s ease;
+}
+.anim-flip3d-up.in-view{
+
+    transform:perspective(800px) rotateX(0);
+}
+
+.anim-flip3d-down{
+
+    transform:perspective(800px) rotateX(-90deg);
+    transition:all 1.6s ease;
+}
+.anim-flip3d-down.in-view{
+
+    transform:perspective(800px) rotateX(0);
+}
+
+/* Cube */
+
+.anim-cube-rotate{
+
+    transform:perspective(1000px) rotateY(180deg);
+    transition:all 1.8s cubic-bezier(.25,.1,.25,1);
+}
+.anim-cube-rotate.in-view{
+
+    transform:perspective(1000px) rotateY(0deg);
+}
+
+/* Tilt */
+
+.anim-tilt-zoom{
+
+    transform:rotateX(10deg) rotateY(-10deg) scale(.85);
+    transition:all 1.6s ease;
+}
+.anim-tilt-zoom.in-view{
+
+    transform:rotateX(0deg) rotateY(0deg) scale(1);
+}
+
+/* Depth */
+
+.anim-depth-pop{
+
+    transform:translateZ(-200px) scale(.8);
+    transition:all 1.5s ease-out;
+    transform-style:preserve-3d;
+}
+.anim-depth-pop.in-view{
+
+    transform:translateZ(0) scale(1);
+}
+
+/* Diagonal */
+
+.anim-rotate-diagonal{
+
+    transform:rotate3d(1,1,0,90deg);
+    transition:all 1.8s ease;
+}
+.anim-rotate-diagonal.in-view{
+
+    transform:rotate3d(1,1,0,0deg);
+}
+
+/* Layer */
+
+.anim-layer-slide{
+
+    transform:translateZ(-150px);
+    box-shadow:0 40px 60px rgba(0,0,0,.15);
+    transition:all 1.8s ease;
+}
+.anim-layer-slide.in-view{
+
+    transform:translateZ(0);
+    box-shadow:none;
+}
+
+/* Spiral */
+
+.anim-spiral-zoom{
+
+    transform:rotate(-720deg) scale(0);
+    transition:all 2s ease-in-out;
+}
+.anim-spiral-zoom.in-view{
+
+    transform:rotate(0deg) scale(1);
+}
+
+/* Auto Animation */
+
+body:not(.modal-open) .anim-slide-right{
+    animation:slideRight 1s ease forwards;
+}
+
+body:not(.modal-open) .anim-slide-left{
+    animation:slideLeft 1s ease forwards;
+}
