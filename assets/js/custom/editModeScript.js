@@ -151,15 +151,63 @@ if (showYesNo) {
 
 
 var changedFiles = new Set();
+const mediaFilesDetail = [];
 let pendingMediaUpdates = {};
 let isDragMode = false;
 let selectedSections = new Set();
 let selectedSectionHtmlMap = {};
+
+let selectedSectionImages = [];
+let removedSectionImages = [];
+
+function getSectionImages(section) {
+    const images = [];
+
+    $(section).find('img').each(function () {
+        const src = $(this).attr('src') || $(this).attr('data-original-src');
+
+        if (src && /\.(jpg|jpeg|png|svg|JPG)$/i.test(src.split('?')[0])) {
+            // images.push(src);
+            images.push(src.split('/').pop().split('?')[0]);
+        }
+    });
+
+    $(section).find('*').each(function () {
+        const style = $(this).attr('style') || '';
+        const backgroundImage = $(this).css('background-image') || '';
+
+        [style, backgroundImage].forEach(function (value) {
+            const matches =
+                value.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/gi) || [];
+
+            matches.forEach(function (match) {
+                const url = match
+                    .replace(/^.*?url\(\s*['"]?/i, '')
+                    .replace(/['"]?\s*\)$/i, '');
+
+                if (url && /\.(jpg|jpeg|png|svg|JPG)$/i.test(url.split('?')[0])) {
+                    // images.push(url);
+                    images.push(url.split('/').pop().split('?')[0]);
+                }
+            });
+        });
+    });
+
+    return [...new Set(images)];
+}
+
+
 function syncChangedFilesToSession() {
     sessionStorage.setItem(
         "changedFiles",
         JSON.stringify(Array.from(changedFiles))
     );
+
+    sessionStorage.setItem(
+        "mediaFilesDetail",
+        JSON.stringify(mediaFilesDetail)
+    );
+
 }
 
 function loadChangedFilesFromSession() {
@@ -170,6 +218,22 @@ function loadChangedFilesFromSession() {
         } catch (e) {
             console.warn("Failed to restore changedFiles", e);
             changedFiles = new Set();
+        }
+    }
+
+    // Restore mediaFilesDetail
+    const storedMediaFiles = sessionStorage.getItem("mediaFilesDetail");
+    if (storedMediaFiles) {
+        try {
+            const parsedMediaFiles = JSON.parse(storedMediaFiles);
+
+            mediaFilesDetail.length = 0;
+            mediaFilesDetail.push(...parsedMediaFiles);
+
+        } catch (e) {
+            console.warn("Failed to restore mediaFilesDetail", e);
+
+            mediaFilesDetail.length = 0;
         }
     }
 }
@@ -344,6 +408,54 @@ $(document).ready(function () {
     }
     var isEditingContent = false;
     var isEditingImages = false;
+
+const THEME_PRESETS = {  //New Code
+  "theme-1": {
+    "--custom-background-color": "#ffffff",
+    "--custom-text-color": "#111827",
+    "--custom-highlighter-color": "#4f46e5",
+    "--custom-border-color": "#d1d5db"
+  },
+  "theme-2": {
+    "--custom-background-color": "#020617",
+    "--custom-text-color": "#f8fafc",
+    "--custom-highlighter-color": "#38bdf8",
+    "--custom-border-color": "#334155"
+  },
+  "theme-3": {
+    "--custom-background-color": "#fffbeb",
+    "--custom-text-color": "#78350f",
+    "--custom-highlighter-color": "#f59e0b",
+    "--custom-border-color": "#fcd34d"
+  },
+  "theme-7": {
+    "--custom-background-color": "#f8fafc",
+    "--custom-text-color": "#020617",
+    "--custom-highlighter-color": "#16a34a",
+    "--custom-border-color": "#cbd5e1"
+  }
+};
+
+function updateThemePreview(preset) {
+    if (!preset) return;
+
+    $('#themePreview .color-box[data-type="bg"]')
+        .css('background-color', preset["--custom-background-color"]);
+
+    $('#themePreview .color-box[data-type="text"]')
+        .css('background-color', preset["--custom-text-color"]);
+
+    $('#themePreview .color-box[data-type="accent"]')
+        .css('background-color', preset["--custom-highlighter-color"]);
+
+    $('#themePreview .color-box[data-type="border"]')
+        .css('background-color', preset["--custom-border-color"]);
+}
+
+    function getCurrentPageName() {
+        const srcReq = new URLSearchParams(window.location.search).get('srcReq');
+        return srcReq || $(".selectedPageName").val() || "index.html";
+    }
 
     function getCookie(name) {
         const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
@@ -975,11 +1087,20 @@ $(document).on('click', '.updateImg', function (e) {
     // Create top bar buttons
     var enableEditMode = $('<button id="enable-editmode">Enable Edit Mode</button>').appendTo(topBar);
     var enableDragMode = $('<button id="enable-dragmode">Drag & Drop Section</button>').appendTo(topBar);
+    var revertLastMadeChanges = $('<button onclick="revertLastMadeChanges()" class="revert_chnages_btn" style="display:none">Revert Last Change</button>').appendTo(topBar);
+        if (getCookie("has_last_change_made") === "true") {
+            revertLastMadeChanges.show();
+        }
+
     var uploadChanges = $('<button onclick="uploadeditedproject()" class="publish_chnages_btn" id="publish_chnages_btn" style="display:none">Publish Changes</button>').appendTo(topBar);
 
     // restore button state after reload
     if (changedFiles && changedFiles.size > 0) {
         uploadChanges.show();
+    }
+
+    if (getCookie("has_last_change_made") === "true") {
+        revertLastMadeChanges.show();
     }
     var saveChanges = $('<button id="save-changes" class="hidden" disabled>Save Changes</button>').appendTo(topBar);
     var updateSeoBtn = $('<button id="update-seo-btn" style="display:none;" class="hidden">Update SEO</button>').appendTo(topBar);
@@ -995,6 +1116,7 @@ $(document).on('click', '.updateImg', function (e) {
 
     // var generateContent = $('<button id="generate-content" class="hidden">Enable Generate Content</button>').appendTo(topBar);
     var aiBotImageHtml = '<img class="aiBotImage" src="assets/images/AiBot.png" alt="AiBot" title="Generate content with AiBot" />';
+    var changeThemeBtn = $('<button id="change-theme" class="hidden">Change Theme</button>').appendTo(topBar); //New code
 
     function toggleEditableClasses(enable) {
         isEditingContent = enable;
@@ -1107,6 +1229,77 @@ $(document).on('click', '.updateImg', function (e) {
 );
 
     });
+
+
+    function createThemePanel() {  //New code
+    if ($('#themePanel').length) return;
+
+    const panelHtml = `
+        <div id="themePanel" class="theme-panel">
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h4 style="margin:0">Change Theme</h4>
+                <button id="closeThemePanel"
+                        style="border:none; background:none; font-size:20px; cursor:pointer;">
+                    &times;
+                </button>
+            </div>
+            <div class="theme-toggle">
+                <button class="theme-tab active" data-tab="default">Default</button>
+                <button class="theme-tab" data-tab="custom">Custom</button>
+                <span class="toggle-indicator"></span>
+            </div>
+
+
+            <div class="theme-section active" id="themeDefault">
+                <label>Select Theme</label>
+                <select id="defaultThemeSelect" class="form-control">
+                    ${Object.keys(THEME_PRESETS)
+                        .map(t => `<option value="${t}">${t}</option>`)
+                        .join('')}
+                </select>
+                <div class="theme-preview" id="themePreview">
+                    <div class="theme-color">
+                        <span>Background</span>
+                        <div class="color-box" data-type="bg"></div>
+                    </div>
+                    <div class="theme-color">
+                        <span>Text</span>
+                        <div class="color-box" data-type="text"></div>
+                    </div>
+                    <div class="theme-color">
+                        <span>Button</span>
+                        <div class="color-box" data-type="accent"></div>
+                    </div>
+                    <div class="theme-color">
+                        <span>Border</span>
+                        <div class="color-box" data-type="border"></div>
+                    </div>
+                    </div>
+
+            </div>
+
+            <div class="theme-section" id="themeCustom">
+                <label>Pick a Theme Color</label>
+                <input type="color" id="customPrimaryColor" class="form-control">
+            </div>
+
+            <div style="text-align:right; margin-top:10px">
+                <button id="applyThemeBtn"
+                        class="btn website-info-btn-primary">
+                    Update Theme
+                </button>
+            </div>
+
+        </div>
+    `;
+
+    $('body').append(panelHtml);
+}
+$(document).on('change', '#defaultThemeSelect', function () { //Theme code
+    const themeKey = $(this).val();
+    updateThemePreview(THEME_PRESETS[themeKey]);
+});
     // generateContent.on('click', function() {
     //     if ($(this).text() === 'Enable Generate Content') {
     //         $(this).text('Disable Generate Content');
@@ -1573,10 +1766,13 @@ $(document).on('click', '.updateImg', function (e) {
 
     // Edit mode functionality
     enableEditMode.on('click', function () {
+        originalHeaderContent = $('#header').html();
+originalFooterContent = $('#footer').html();
  window.originalPageHTML = $('#wrapper').html();
         isEditingContent = true;
         isEditingImages = true;
         toggleEditableClasses(true);
+        changeThemeBtn.removeClass('hidden');
         wrapper.addClass('edit-mode').find('.editable').attr('contenteditable', true);
         //handleImageClick();
         //configureImageUpload();
@@ -1646,8 +1842,13 @@ updateSeoBtn.removeClass('hidden');
         let changesInMainContent = false;
 
         // Store the original content to compare changes
-        let originalHeaderContent = $('#header').html();
-        let originalFooterContent = $('#footer').html();
+            let originalHeaderContent = '';
+            let originalFooterContent = '';
+
+            $(window).on('load', function () {
+                originalHeaderContent = $('#header').html();
+                originalFooterContent = $('#footer').html();
+            });
 
         // Monitor changes in the footer using keypress
         $('#footer').on('input keypress', function () {
@@ -1684,8 +1885,68 @@ updateSeoBtn.removeClass('hidden');
             changesInFooter = false;
             changesInMainContent = false;
         }
+/* THEME EVENTS ( */
 
+// Change Theme button click
+changeThemeBtn.on('click', function (e) {//New code
+    e.stopPropagation();
+
+    createThemePanel();
+    $('#themePanel').toggle();
+
+    // ⭐ FORCE INITIAL PREVIEW (theme-1)
+    const themeKey = $('#defaultThemeSelect').val() || 'theme-1';
+    updateThemePreview(THEME_PRESETS[themeKey]);
+});
+
+// Tab switching
+$(document).on('click', '.theme-tab', function () {   //New code
+    $('.theme-tab').removeClass('active');
+    $(this).addClass('active');
+
+    $('.theme-section').removeClass('active');
+    $('#theme' + $(this).data('tab')
+        .charAt(0).toUpperCase() +
+        $(this).data('tab').slice(1)
+    ).addClass('active');
+});
+
+// Apply Theme
+$(document).on('click', '#applyThemeBtn', function () {
+
+    const activeTab = $('.theme-tab.active').data('tab');
+
+    console.log("Active Tab =", activeTab);
+
+    if (activeTab === 'default') {
+
+        const themeKey = $('#defaultThemeSelect').val();
+        console.log("Theme Key =", themeKey);
+
+        const preset = THEME_PRESETS[themeKey];
+        console.log("Preset =", preset);
+
+        const primaryColor = preset["--custom-highlighter-color"];
+        console.log("Primary =", primaryColor);
+
+        applyThemePerSection(primaryColor);
+
+    } else {
+
+        const primaryColor = $('#customPrimaryColor').val();
+        console.log("Custom =", primaryColor);
+
+        applyThemePerSection(primaryColor);
+    }
+
+});
+$(document).on('click', '#closeThemePanel', function (e) { //New code
+    e.stopPropagation();
+    $('#themePanel').hide();
+});
         saveChanges.on('click', function () {
+
+             $('#themePanel').hide();
             $('.selectedPageName').remove();
             $('[id="top-bar"]').not(':first').remove();
             $('#page-header').removeClass('sticky-active');
@@ -1708,7 +1969,7 @@ updateSeoBtn.removeClass('hidden');
             isEditingContent = false;
             isEditingImages = false;
             toggleEditableClasses(false);
-
+            changeThemeBtn.addClass('hidden');
             isDragMode = false;
             $('body').removeClass('drag-mode');
             $('body').removeClass('dragging-active');
@@ -1765,6 +2026,19 @@ updateSeoBtn.removeClass('hidden');
                 }
             });
             // Clone the HTML and clean up
+                $('*').each(function () {
+                    const style = $(this).attr('style');
+
+                    if (style && style.includes('background-image')) {
+                        const newStyle = style.replace(
+                            /(background-image\s*:\s*url\(\s*['"]?)https?:\/\/127\.0\.0\.1:8000\//g,
+                            '$1'
+                        );
+
+                        $(this).attr('style', newStyle);
+                    }
+                });
+
             var editedHTML = $('html').clone();
             editedHTML.find('meta[name="description"]').attr(
                     'content',
@@ -1790,6 +2064,7 @@ editedHTML.find('title').text(
             editedHTML.find('script[data-editor="true"]').remove();
             editedHTML.find('link[href*="/assets/css/custom/editmode.css"]').remove();
             editedHTML.find('#top-bar').remove();
+            editedHTML.find('#themePanel').remove();
             // SCRIPTS WHICH HAVE BEEN ADDED FROM THE BACKEND HAS TO BE REMOVE BEFORE SAVE
             // editedHTML.find('script[src*="editmode"]').remove();
             // editedHTML.find('script[src*="editModeScript"]').remove();
@@ -1823,25 +2098,32 @@ editedHTML.find('title').text(
 
 
             const filesDetailsMap = {};
+            filesDetailsMap["selectedSectionImages"] = selectedSectionImages;
+            filesDetailsMap["removedSectionImages"] = removedSectionImages;
 
-            // Check if the header has changed, and if it has, add it to the filesDetailsMap
-            if (changesInHeader && originalHeaderContent !== $('#header').html()) {
+
+                            alert(
+                    "Add sections image list final:\n" +
+                    JSON.stringify(selectedSectionImages, null, 2) +
+                    "\n\nRemove section Image list final:\n" +
+                    JSON.stringify(removedSectionImages, null, 2)
+                );
+                            // Check if the header has changed, and if it has, add it to the filesDetailsMap
+            if ($('#header').html() !== originalHeaderContent) {
                 var editedHeader = $('#header').html();
                 filesDetailsMap["header.html"] = editedHeader;
                 changedFiles.add("header.html");
                 syncChangedFilesToSession();
 
-                changesInHeader = false; // Reset flag
             }
 
             // Check if footer content has changed using keypress or input**
-            if (changesInFooter && originalFooterContent !== $('#footer').html()) {
+            if ($('#footer').html() !== originalFooterContent) {
                 var editedFooter = $('#footer').html();
                 filesDetailsMap["footer.html"] = editedFooter;
                 changedFiles.add("footer.html");
                 syncChangedFilesToSession();
 
-                changesInFooter = false; // Reset flag
             }
 
             // Check if main content has changed
@@ -1850,7 +2132,8 @@ editedHTML.find('title').text(
                 editedHTML.find('#footer').html('');
                 editedHTML.find('input[type="text"].hidden.selectedPageName').remove();
 
-            var fileName = $(".selectedPageName").val() || "index.html";
+            // var fileName = $(".selectedPageName").val() || "index.html";
+            var fileName = getCurrentPageName();
             const seoTitle = $('title').attr('data-seo-title');
 
 
@@ -1864,7 +2147,7 @@ editedHTML.find('title').text(
 
 
             // Call the function to save change
-
+            syncChangedFilesToSession();
             editClientSite(filesDetailsMap);
 
             // show publish button if there are changes
@@ -1984,8 +2267,8 @@ editedHTML.find('title').text(
     function editClientSite(filesDetailsMap) {
         filesDetailsMap["clientName"] = getCookie("clientName");
         filesDetailsMap["clientProjectName"] = getCookie("clientProjectName");
-        filesDetailsMap["pageName"] = $(".selectedPageName").val() || "index.html";
-
+        // filesDetailsMap["pageName"] = $(".selectedPageName").val() || "index.html";
+        filesDetailsMap["pageName"] = getCurrentPageName();
 
         var filename = filesDetailsMap["pageName"]
         setCookie('preview', 'false', 7);
@@ -1997,9 +2280,15 @@ editedHTML.find('title').text(
         Object.keys(pendingMediaUpdates).forEach((key) => {
             const item = pendingMediaUpdates[key];
             formData.append('mediaDataFiles', item.file);
-            // alert("oldFilePath9999999-----"+item.oldFilePath)
+
+            // create list of mdeia files like image and video
+            if (!mediaFilesDetail.includes(key)) {
+                mediaFilesDetail.push(key);
+            }
 
         });
+
+        syncChangedFilesToSession();
 
         $.ajax({
             type: 'POST',
@@ -2013,17 +2302,16 @@ editedHTML.find('title').text(
             success: function (data) {
 
 
-                showCustomAlertBox(
-                    'success',
-                    'Changes Saved Successfully',
-                    function () {
-                        console.log("Changes Saved Successfully");
-                        $('#loading-message').remove();
+            showCustomAlertBox(
+                'success',
+                'Changes Saved Successfully',
+                function () {
+                    console.log("Changes Saved Successfully");
+                    $('#loading-message').remove();
 
-                        window.location.href = `/es/?srcReq=${filename}`;
-                        // location.reload();
-                    }
-                );
+                    location.href = `/es/?srcReq=${filename}&v=${new Date().getTime()}`;
+                }
+            );
 
             },
             error: function (xhr, errmsg, err) {
@@ -2083,13 +2371,23 @@ editedHTML.find('title').text(
     }
 
 
-    $('#AddNewSection').click(function () {
-        if (isEditingContent) {
-            createAndShowModal();
-        } else {
-            alert("Please Enable Edit Mode");
-        }
-    });
+
+
+$(document).on('click', '#AddNewSection', function () {
+
+    if (!isEditingContent) {
+        alert("Please Enable Edit Mode");
+        return;
+    }
+
+    selectedSections.clear();
+    selectedSectionHtmlMap = {};
+
+    window.currentTargetSection = $('#middle_section_default');
+    window.currentInsertPosition = 'below';
+
+    createAndShowModal();
+});
     // Add section part
     // $('#AddNewSection').click(function() {
     //     if (isEditingContent) {
@@ -2175,6 +2473,9 @@ editedHTML.find('title').text(
                     subsection: 'allsections',
                     request_src: "addSectonPopup"
                 },
+                    beforeSend: function () {
+                        showSectionLoader();
+                    },
                 success: function (response) {
                     // alert(response)
                     $('#add_section_container').html(response);
@@ -2200,6 +2501,7 @@ editedHTML.find('title').text(
                     }
                     $("#default-middle_section").hide();
                     applyPageTypeView();
+                    hideSectionLoader();
 
                 }
             });
@@ -2251,17 +2553,51 @@ editedHTML.find('title').text(
 
 $(document).on('change', '.section-checkbox', function () {
     const id = $(this).val();
+
     if ($(this).is(':checked')) {
+
         selectedSections.add(id);
-        selectedSectionHtmlMap[id] = $("#" + id).clone(true, true);
+
+        const section = $("#" + id).clone(true, true);
+        selectedSectionHtmlMap[id] = section;
+
+        selectedSectionImages = [
+            ...new Set([
+                ...selectedSectionImages,
+                ...getSectionImages(section)
+            ])
+        ];
+
+        removedSectionImages = removedSectionImages.filter(function (img) {
+            return !selectedSectionImages.includes(img);
+        });
 
     } else {
+
         selectedSections.delete(id);
         delete selectedSectionHtmlMap[id];
+
+        selectedSectionImages = [];
+
+        Object.values(selectedSectionHtmlMap).forEach(function (section) {
+            selectedSectionImages.push(
+                ...getSectionImages(section)
+            );
+        });
+
+        selectedSectionImages = [
+            ...new Set(selectedSectionImages)
+        ];
     }
 
-});
+console.log("Selected Section Images:", selectedSectionImages);
+// console.log("Removed Section Images:", removedSectionImages);
 
+alert(
+    "Selected Section Images:\n" + JSON.stringify(selectedSectionImages, null, 2)
+);
+
+});
 
     $(document).on('click', '.add-section-above, .add-section-below', function () {
 
@@ -2315,15 +2651,24 @@ $(document).on('change', '.section-checkbox', function () {
 
             addActionButtons(clonedSection);
 
-            if (window.currentInsertPosition === 'above') {
+if (
+    window.currentTargetSection &&
+    window.currentTargetSection.attr('id') === 'middle_section_default'
+) {
 
-                window.currentTargetSection.before(clonedSection);
+    $('#middle_section_default').hide();
 
-            } else {
+    $('#middle_section_default').after(clonedSection);
 
-                window.currentTargetSection.after(clonedSection);
+} else if (window.currentInsertPosition === 'above') {
 
-            }
+    window.currentTargetSection.before(clonedSection);
+
+} else {
+
+    window.currentTargetSection.after(clonedSection);
+
+}
 
             window.currentTargetSection = clonedSection;
 
@@ -2401,105 +2746,288 @@ $(document).on('change', '.section-checkbox', function () {
         return pathname;
     }
 
+/* THEME HELPERS */
 
-    // function uploadImagesFromAddedSections() {
+function applyThemeVariables(vars) {  // New code
+    Object.keys(vars).forEach(key => {
+        document.body.style.setProperty(key, vars[key]);
+    });
+}
 
-    //     const clientName = getCookie('clientName');
-    //     const clientProjectName = getCookie('clientProjectName');
+function generateThemeFromPrimary(primary) {
+  const dark = isDarkColor(primary);
 
-    //     if (!clientName || !clientProjectName) {
-    //         showCustomAlertBox('error', 'clientName or clientProjectName missing in cookies');
-    //         console.log("clientName or clientProjectName missing in cookies");
-    //         return;
-    //     }
+  return {
+"--custom-background-color": dark
+  ? softenChroma(adjustLightness(primary, -0.45))
+  : oklchToHex({ mode: 'oklch', l: 0.97, c: 0.02, h: hexToOKLCH(primary).h }),
 
-    //     const formData = new FormData();
-    //     formData.append('clientName', clientName);
-    //     formData.append('clientProjectName', clientProjectName);
+    "--custom-text-color": dark
+      ? "#f8fafc"
+      : "#0f172a",
 
-    //     let uploadPromises = [];
-    //     let imageElements = [];
+    "--custom-highlighter-color": primary,
 
-    //     $('.section-wrapper[data-new-section="true"]').each(function () {
+    "--custom-border-color": dark
+      ? adjustLightness(primary, +0.18)
+      : adjustLightness(primary, -0.18)
+  };
+}
 
-    //         $(this).find('img').each(function () {
 
-    //             const imgEl = this;
-    //             const imgSrc = imgEl.src;
 
-    //             if (!imgSrc || imgSrc.startsWith('data:')) return;
+// Convert HEX → OKLCH
+function hexToOKLCH(hex) {
+  const rgb = hexToRgb(hex);
+  return culori.oklch(rgb);
+}
 
-    //             let image_to_save = getSanitizedImgPath(imgEl);
+// Convert OKLCH → HEX
+function oklchToHex(oklch) {
+  return culori.formatHex(oklch);
+}
 
-    //             changedFiles.add(image_to_save);
-    //             syncChangedFilesToSession();
+// Perceptual lighten/darken using OKLCH
+function adjustLightness(hex, deltaL) {
+  const color = hexToOKLCH(hex);
+  if (!color) return hex;
 
-    //             const promise = new Promise((resolve) => {
+  color.l = Math.max(0, Math.min(1, color.l + deltaL));
+  return oklchToHex(color);
+}
 
-    //                 urlToFile(imgSrc, getFileNameFromImgSrc(imgEl), function (file) {
+// Reduce chroma slightly for backgrounds (important!)
+function softenChroma(hex, factor = 0.85) {
+  const color = hexToOKLCH(hex);
+  if (!color) return hex;
 
-    //                     formData.append('imgFiles', file);
-    //                     formData.append('imgFileNames', getFileNameFromImgSrc(imgEl));
+  color.c *= factor;
+  return oklchToHex(color);
+}
 
-    //                     imageElements.push(imgEl);
+// HEX → RGB for culori
+function hexToRgb(hex) {
+  hex = hex.replace('#', '');
+  const bigint = parseInt(hex, 16);
+  return {
+    mode: 'rgb',
+    r: ((bigint >> 16) & 255) / 255,
+    g: ((bigint >> 8) & 255) / 255,
+    b: (bigint & 255) / 255
+  };
+}
 
-    //                     resolve();
-    //                 });
 
-    //             });
+function isDarkColor(hex) {
+  const c = hexToOKLCH(hex);
+  return c && c.l < 0.5;
+}
+/* ----------COLOR NORMALIZER ---------- */
 
-    //             uploadPromises.push(promise);
-    //         });
+function normalizePrimaryColor(hex) { //New code
+  const c = hexToOKLCH(hex);
+  if (!c) return hex;
 
-    //         $(this).removeAttr('data-new-section');
-    //     });
+  // Kill neon / oversaturation
+  c.c = Math.min(c.c, 0.13);
 
-    //     // AFTER ALL FILES ARE READY
-    //     Promise.all(uploadPromises).then(() => {
+  // Prevent too-dark or too-light accents
+  c.l = Math.max(0.45, Math.min(c.l, 0.65));
 
-    //         if (uploadPromises.length === 0) return;
+  return oklchToHex(c);
+}
 
-    //         console.log('------------------------bulk upload started');
 
-    //         $.ajax({
-    //             type: "POST",
-    //             url: "/fuos/",
-    //             data: formData,
-    //             processData: false,
-    //             contentType: false,
-    //             success: function () {
+// Generate full human-friendly palette
+function generateHumanPalette(primaryHex) {
+  const base = hexToOKLCH(primaryHex);
+  const hue = base.h;
 
-    //                 console.log('------------------------bulk upload success');
+  return {
+    primary: oklchToHex({ l: 0.55, c: 0.14, h: hue }),
 
-    //                 // refresh all images AFTER upload
-    //                 imageElements.forEach(function (imgEl) {
+    surface: oklchToHex({ l: 0.98, c: 0.006, h: hue }),
+    surfaceAlt: oklchToHex({ l: 0.95, c: 0.01, h: hue }),
 
-    //                     const basePath = getBasePathFromImgSrc(imgEl);
-    //                     const fileName = getFileNameFromImgSrc(imgEl);
+    border: oklchToHex({ l: 0.88, c: 0.015, h: hue }),
 
-    //                     if (basePath && fileName) {
-    //                         $(imgEl).attr(
-    //                             'src',
-    //                             basePath + fileName + '?' + Date.now()
-    //                         );
-    //                     }
+    textPrimary: "#0f172a",
+    textSecondary: "#475569"
+  };
+}
 
-    //                 });
-    //             },
-    //             error: function (xhr) {
-    //                 console.error("Bulk image upload failed:", xhr.responseText);
-    //             }
-    //         });
+/* SECTION AWARE THEME HELPERS */
 
-    //     });
-    // }
+let currentPrimaryColor = null;      //New code
+function generateThemeForSection(primary, sectionType) {
+
+  //  Normalize user color (MOST IMPORTANT)
+  const safePrimary = normalizePrimaryColor(primary);
+  const base = hexToOKLCH(safePrimary);
+  const hue = base.h;
+
+  // DARK SECTION
+  if (sectionType === 'dark') {
+    return {
+      "--custom-background-color": oklchToHex({
+        mode: 'oklch',
+        l: 0.14,
+        c: 0.035,
+        h: hue
+      }),
+
+      "--custom-text-color": "#f8fafc",
+
+      "--custom-highlighter-color": safePrimary,
+
+      "--custom-border-color": oklchToHex({
+        mode: 'oklch',
+        l: 0.28,
+        c: 0.04,
+        h: hue
+      })
+    };
+  }
+
+  // LIGHT SECTION
+  return {
+    "--custom-background-color": oklchToHex({
+      mode: 'oklch',
+      l: 0.98,
+      c: 0.006,
+      h: hue
+    }),
+
+    "--custom-text-color": "#0f172a",
+
+    "--custom-highlighter-color": safePrimary,
+
+    "--custom-border-color": oklchToHex({
+      mode: 'oklch',
+      l: 0.88,
+      c: 0.012,
+      h: hue
+    })
+  };
+}
+
+
+function applyThemePerSection(primaryColor) {
+
+    currentPrimaryColor = primaryColor;
+
+    $('.section-wrapper').each(function () {
+
+        const sectionType = $(this).data('theme') || 'light';
+
+        const vars = generateThemeForSection(primaryColor, sectionType);
+
+        Object.keys(vars).forEach(key => {
+            this.style.setProperty(key, vars[key]);
+        });
+
+    });
+
+}
+
+    function uploadImagesFromAddedSections() {
+
+        const clientName = getCookie('clientName');
+        const clientProjectName = getCookie('clientProjectName');
+
+        if (!clientName || !clientProjectName) {
+            showCustomAlertBox('error', 'clientName or clientProjectName missing in cookies');
+            console.log("clientName or clientProjectName missing in cookies");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('clientName', clientName);
+        formData.append('clientProjectName', clientProjectName);
+
+        let uploadPromises = [];
+        let imageElements = [];
+
+        $('.section-wrapper[data-new-section="true"]').each(function () {
+
+            $(this).find('img').each(function () {
+
+                const imgEl = this;
+                const imgSrc = imgEl.src;
+
+                if (!imgSrc || imgSrc.startsWith('data:')) return;
+
+                let image_to_save = getSanitizedImgPath(imgEl);
+
+                changedFiles.add(image_to_save);
+                syncChangedFilesToSession();
+
+                const promise = new Promise((resolve) => {
+
+                    urlToFile(imgSrc, getFileNameFromImgSrc(imgEl), function (file) {
+
+                        formData.append('imgFiles', file);
+                        formData.append('imgFileNames', getFileNameFromImgSrc(imgEl));
+
+                        imageElements.push(imgEl);
+
+                        resolve();
+                    });
+
+                });
+
+                uploadPromises.push(promise);
+            });
+
+            $(this).removeAttr('data-new-section');
+        });
+
+        // AFTER ALL FILES ARE READY
+        Promise.all(uploadPromises).then(() => {
+
+            if (uploadPromises.length === 0) return;
+
+            console.log('------------------------bulk upload started');
+
+            $.ajax({
+                type: "POST",
+                url: "/fuos/",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function () {
+
+                    console.log('------------------------bulk upload success');
+
+                    // refresh all images AFTER upload
+                    imageElements.forEach(function (imgEl) {
+
+                        const basePath = getBasePathFromImgSrc(imgEl);
+                        const fileName = getFileNameFromImgSrc(imgEl);
+
+                        if (basePath && fileName) {
+                            $(imgEl).attr(
+                                'src',
+                                basePath + fileName + '?' + Date.now()
+                            );
+                        }
+
+                    });
+                },
+                error: function (xhr) {
+                    console.error("Bulk image upload failed:", xhr.responseText);
+                }
+            });
+
+        });
+    }
 
 
     // Ensure event is attached once to avoid repeated execution
-    // $(document).ready(function() {
-    //     $('#saveSection').off('click').on('click', handleSaveSection);
-    //     alert("save section clicked");
-    // });
+    $(document).ready(function() {
+        $('#saveSection').off('click').on('click', handleSaveSection);
+        // alert("save section clicked");
+    });
 
 
 
@@ -2553,7 +3081,7 @@ $(document).on('change', '.section-checkbox', function () {
 
         const sectionId = sectionWrapper.attr('id');
 
-        // 🧹 Remove all old buttons and wrappers first
+        // Remove all old buttons and wrappers first
         sectionWrapper.find('.add-section-above, .add-section-below, .remove-section-btn-wrapper, .remove-section-btn').remove();
 
         //  Create all button HTML (only add wrapper if it contains the button)
@@ -2587,17 +3115,49 @@ $(document).on('change', '.section-checkbox', function () {
     }
 
 
-    function handleRemoveSection(e) {
-        e.stopPropagation();
-        const sectionId = $(this).data('target-id');
-        const section = $('#' + sectionId);
+function handleRemoveSection(e) {
+    e.stopPropagation();
 
-        if (confirm('Are you sure you want to remove this section?')) {
-            section.remove();
+    const sectionId = $(this).data('target-id');
+    const section = $('#' + sectionId);
 
-            toggleDefaultMiddleSection();
+  if (confirm('Are you sure you want to remove this section?')) {
+
+const currentSection = $(this).closest('.section-wrapper');
+
+removedSectionImages = [
+    ...new Set([
+        ...removedSectionImages,
+        ...getSectionImages(currentSection)
+    ])
+];
+alert(
+    "Removed Section Images:\n" +
+    JSON.stringify(removedSectionImages, null, 2)
+);
+
+currentSection.remove();
+
+console.log("Removed Section Images:", removedSectionImages);
+
+    setTimeout(function () {
+
+        const customSections = $('#mainPageContent')
+            .find('.section-wrapper')
+            .not('#middle_section_default');
+
+        if (customSections.length === 0) {
+
+            $('#middle_section_default')
+                .removeAttr('style')
+                .css('display', 'block')
+                .show();
+
         }
-    }
+
+    }, 10);
+}
+}
 
     function generateUniqueId() {
         return 'section-' + Math.random().toString(36).substring(2, 15);
@@ -2686,7 +3246,8 @@ function showProjectLoader(message = "Uploading changes, please wait…") {
                 }
 
                 #project-loader.active {
-                    opacity: 1;
+
+                opacity: 1;
                     pointer-events: all;
                 }
 
@@ -2728,11 +3289,16 @@ function hideProjectLoader() {
 
 
 function uploadeditedproject() {
+
+
+    loadChangedFilesFromSession();
     const projectId = getCookie("UpdateContentAddSectionprojectId");
     const clientName = getCookie("clientName");
     const clientProjectName = getCookie("clientProjectName");
     // alert('Changes are uploading please wait');
     showProjectLoader("Uploading changes, please wait…");
+    //alert("mediaFilesDetail----"+JSON.stringify(mediaFilesDetail))
+
 
     //  SHOW LOADER
     $('#project-loader').addClass('active');
@@ -2742,7 +3308,8 @@ function uploadeditedproject() {
         data: {
             client_name: clientName,
             client_project_name: clientProjectName,
-            changed_files: JSON.stringify(Array.from(changedFiles))
+            changed_files: JSON.stringify(Array.from(changedFiles)),
+            media_files: JSON.stringify(mediaFilesDetail)
 
         },
         beforeSend: function () {
@@ -2785,6 +3352,85 @@ function uploadeditedproject() {
     });
 }
 
+function revertLastMadeChanges() {
+
+    showCustomAlertBox(
+        'error',
+        'Are you sure you want to undo your last changes? This will restore the previous version of your website',
+        function () {
+
+            const projectId = getCookie("UpdateContentAddSectionprojectId");
+            const clientName = getCookie("clientName");
+            const clientProjectName = getCookie("clientProjectName");
+alert("inside revert")
+            if (!projectId || !clientName || !clientProjectName) {
+
+                showCustomAlertBox(
+                    'error',
+                    'Unable to revert changes. Project information is missing.'
+                );
+
+                return;
+            }
+
+            // SHOW SAME LOADER AS PUBLISH
+            showProjectLoader("Reverting last changes, please wait…");
+
+            $.ajax({
+                url: "/revertchanges/",
+                type: "POST",
+                data: {
+                    project_id: projectId,
+                    client_name: clientName,
+                    client_project_name: clientProjectName
+                },
+
+                success: function (response) {
+
+                    // HIDE LOADER
+                    hideProjectLoader();
+
+                    if (response.status === 200) {
+
+                        setCookie("has_last_change_made", "false", 7);
+
+                        showCustomAlertBox(
+                            'success',
+                            'Last change has been reverted successfully.',
+                            function () {
+                                location.reload();
+                            }
+                        );
+
+                    } else {
+
+                        showCustomAlertBox(
+                            'error',
+                            response.message || 'Unable to revert the last change.'
+                        );
+                    }
+                },
+
+                error: function (xhr) {
+
+                    console.error(
+                        "Revert changes error:",
+                        xhr.responseText
+                    );
+
+                    // HIDE LOADER
+                    hideProjectLoader();
+
+                    showCustomAlertBox(
+                        'error',
+                        'Failed to revert the last change. Please try again.'
+                    );
+                }
+            });
+        },
+        true
+    );
+}
 
 
 function initDragAndDrop() {
@@ -2925,6 +3571,9 @@ $(document).on("click", ".addSectionPaginationBtn, .middleSectionFilter", functi
             request_src: "addSectonFilter",
             page: page
         },
+            beforeSend: function () {
+        showSectionLoader();
+        },
         success: function (response) {
 
             $('.display_middle_sections').html(response.middles_html);
@@ -2954,6 +3603,7 @@ $(document).on("click", ".addSectionPaginationBtn, .middleSectionFilter", functi
                 });
             }
             $('.pagination-container').html(response.pagination_html);
+            hideSectionLoader();
         }
     });
 
@@ -3274,3 +3924,13 @@ if (currentFileName.toLowerCase() === "index.html") {
     );
 
 });
+
+function showSectionLoader() {
+    $('#sectionLoader').show();
+}
+
+function hideSectionLoader() {
+    $('#sectionLoader').hide();
+}
+
+
