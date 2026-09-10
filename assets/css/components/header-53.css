@@ -1,0 +1,158 @@
+body {
+    margin: 0;
+    font-family: 'Quicksand', sans-serif;
+}
+
+/* HEADER */
+.header-53 {
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.header-53--sticky {
+    background: #fff !important;
+}
+
+.header-53-logo img {
+    max-height: 60px;
+    transition: transform 0.3s ease;
+}
+.header-53-logo img:hover {
+    transform: scale(1.05);
+}
+
+/* NAV */
+.header-53-navbar {
+    background: transparent;
+    border: none;
+}
+
+.header-53-menu > li > a {
+    color: #fff !important;
+    font-weight: 700;
+    padding: 20px 12px !important;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.header-53--sticky .header-53-menu > li > a {
+    color: #000 !important;
+}
+
+.header-53-menu > li > a::before {
+    content: "";
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    width: 0%;
+    height: 2px;
+    background: #00ffd5;
+    transition: width 0.3s ease;
+}
+
+.header-53-menu > li > a:hover::before {
+    width: 100%;
+}
+
+.header-53-menu > li > a:hover {
+    color: #00ffd5 !important;
+    transform: translateY(-2px);
+}
+
+/* HERO */
+.custom-hero-section {
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* zoom effect */
+.custom-hero-section::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: inherit;
+    background-size: cover;
+    background-position: center;
+    animation: zoomHero 18s ease-in-out infinite alternate;
+    z-index: 0;
+}
+
+@keyframes zoomHero {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.12); }
+}
+
+/* overlay */
+.custom-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0.2));
+    z-index: 1;
+}
+
+/* content */
+.custom-hero-content {
+    position: relative;
+    z-index: 2;
+    padding-top: 180px;
+}
+
+/* text */
+.custom-hero-title {
+    font-size: 56px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.custom-hero-title span {
+    color: #00ffd5;
+}
+
+.custom-hero-subtitle {
+    font-size: 18px;
+    color: #ddd;
+    margin-top: 20px;
+}
+
+/* BREADCRUMB */
+.header-breadcrumb-section {
+    padding: 80px 0;
+    color: #fff;
+}
+
+.header-breadcrumb-section-title {
+    font-size: 36px;
+    font-weight: 700;
+}
+
+.header-breadcrumb-section-breadcrumb {
+    font-size: 14px;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+
+    .custom-hero-title {
+        font-size: 32px;
+    }
+
+    .custom-hero-content {
+        padding-top: 140px;
+    }
+
+    .header-53-menu > li > a {
+        background: #111;
+    }
+}
+
+@media (max-width: 480px) {
+    .custom-hero-subtitle {
+        font-size: 14px;
+    }
+}
