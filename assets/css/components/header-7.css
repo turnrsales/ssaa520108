@@ -1,14 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Lato:wght@400;700&family=Open+Sans:wght@400;700&family=Poppins:wght@400;700&family=Merriweather:wght@400;700&display=swap');
-.header-7{
-  font-family: 'Roboto', sans-serif!important;
+
+.header-7 {
+  font-family: 'Roboto', sans-serif !important;
 }
-/* Top Header Styles */
+
 .header-7 .st-top-header {
   overflow: hidden;
-  border-bottom: 1px solid rgba(70, 6, 50, 0.4);
+  border-bottom: 5px solid var(--secondary-color);
   padding: 14px 9px;
   background: var(--primary-color);
-  border-bottom: 5px solid var(--secondary-color);
 }
 
 .header-7 .header-holder {
@@ -139,7 +139,6 @@
   }
 }
 
-/* Modernized Section Styles */
 .header-7-section {
   font-family: 'Lato', sans-serif;
   background: linear-gradient(to right, #fafafa, #f5f5f5);
@@ -199,13 +198,13 @@
 }
 
 .header-7-section-btn-green {
-  background-color:#cfcfcf10 ;
+  background-color: #cfcfcf10;
   color: #292929;
   border: none;
 }
 
 .header-7-section-btn-green:hover {
-  background-color:#cfcfcf10 ;
+  background-color: #cfcfcf10;
 }
 
 .header-7-section-btn-dark {
@@ -242,6 +241,6 @@
   }
 }
 
-  .header-7 #nav .navbar-collapse {
+.header-7 #nav .navbar-collapse {
   z-index: 999;
 }
