@@ -80,36 +80,47 @@
         } catch (e) { console.warn('initEvents4 card error', e); }
       });
     }
+function initAbout33() {
+    const els = $qsAll('.about-33-text');
+    if (!els.length || typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
 
-    function initAbout33() {
-      const els = $qsAll('.about-33-text');
-      if (!els.length) return;
-
-      const distance = window.innerWidth * 1.2;
-      els.forEach((el, i) => {
+    els.forEach((el) => {
         if (hasDatasetFlag(el, '_about33')) return;
         setDatasetFlag(el, '_about33');
 
         try {
-          gsap.fromTo(
-            el,
-            { x: i % 2 === 0 ? -distance : distance },
-            {
-              x: i % 2 === 0 ? distance : -distance,
-              ease: "none",
-              scrollTrigger: {
-                trigger: ".about-33",
-                start: "top top",
-                end: "+=200%",
-                scrub: true,
-                pin: false
-              }
-            }
-          );
-        } catch (e) { console.warn('initAbout33 error', e); }
-      });
-    }
+            gsap.fromTo(
+                el,
+                {
+                    x: 0,
+                    y: 20,
+                    opacity: 0.6,
+                    scale: 0.96
+                },
+                {
+                    x: 0,
+                    y: 0,
+                    opacity: 1,
+                    scale: 1,
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: el.closest('.about-33-row') || '.about-33',
+                        start: "top 90%",
+                        end: "center 50%",
+                        scrub: 1,
+                        invalidateOnRefresh: true
+                    }
+                }
+            );
+        } catch (e) {
+            console.warn('initAbout33 error', e);
+        }
+    });
 
+    try {
+        ScrollTrigger.refresh();
+    } catch (e) {}
+}
     function initOurteam3() {
       const els = $qsAll('#ourteam-3 .ourteam-3-card');
       if (!els.length) return;
@@ -732,3 +743,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // service-24
 $(window).on("scroll", function () { var scrollTop = $(window).scrollTop(); var sectionOffset = $(".services-24-sticky-wrapper").offset().top; var sectionHeight = $(".services-24-sticky-wrapper").outerHeight(); var scrollPos = scrollTop - sectionOffset; var cards = $(".services-24-card"); var cardHeight = sectionHeight / cards.length; cards.each(function (i) { var start = i * cardHeight * 0.8; var end = start + cardHeight; if (scrollPos >= start && scrollPos < end) { $(this).addClass("active").css("z-index", 10 + i); } else { $(this).removeClass("active"); } }); });
+
+
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const elements = document.querySelectorAll('[class*="anim-"]');
+
+    const observer = new IntersectionObserver((entries) => {
+
+        entries.forEach((entry) => {
+
+            if (entry.isIntersecting) {
+                entry.target.classList.add("in-view");
+            } else {
+                entry.target.classList.remove("in-view");
+            }
+
+        });
+
+    }, {
+        threshold: 0.15
+    });
+
+    elements.forEach((el) => observer.observe(el));
+
+});
