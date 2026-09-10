@@ -1,0 +1,155 @@
+/* ================= BASE ================= */
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.header-14 {
+    font-family: 'Lato', sans-serif !important;
+}
+
+/* ================= HEADER (NAVBAR ONLY) ================= */
+.header-14-header-section {
+    height: auto !important;
+    background: none !important;
+    position: relative;
+}
+
+/* ================= NAVBAR ================= */
+.header-14-navbar {
+    background-color: transparent;
+    border: none;
+    margin-bottom: 0;
+    position: fixed;
+    width: 100%;
+    z-index: 999;
+}
+
+.header-14-navbar .navbar-nav > li > a {
+    color: #fff !important;
+    font-weight: 400;
+}
+
+.header-14-navbar .navbar-nav > .dropdown > a .caret {
+    border-top-color: #fff;
+}
+
+.header-14-navbar .navbar-nav > .dropdown-menu {
+    background-color: #fff;
+    min-width: 200px;
+}
+
+.header-14-navbar .navbar-nav > .dropdown-menu > li > a {
+    color: #333;
+    padding: 10px 20px;
+}
+
+.header-14-navbar .navbar-nav > .dropdown-menu > li:hover > a,
+.header-14-navbar .navbar-nav > .dropdown-menu > li > a:hover {
+    background-color: #5d83c5;
+    color: #fff;
+}
+
+.header-14-navbar-brand img {
+    height: 40px;
+}
+
+.header-14-header-section .navbar-collapse {
+    padding: 25px;
+}
+
+/* ================= HERO SECTION (LIKE HEADER-15) ================= */
+.main-header-section {
+    height: 100vh;
+    position: relative; /* 🔥 KEY */
+    color: #fff;
+
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+}
+
+/* HERO TEXT (same logic as working header-15) */
+.main-header-section .header-14-hero-text {
+    position: absolute;
+    top: 50%;
+    left: 33%;
+    transform: translate(-50%, -50%);
+
+    max-width: 600px;
+    padding: 20px;
+}
+
+/* ================= TEXT ================= */
+.header-14-hero-text h1 {
+    font-size: 48px;
+    font-weight: bold;
+    line-height: 1.2;
+    margin-bottom: 20px;
+}
+
+.header-14-subtext {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: #eee;
+}
+
+.header-14-schedule-btn {
+    background-color: #1b3c89;
+    border: none;
+    padding: 10px 20px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.header-14-tagline {
+    font-size: 14px;
+    font-weight: bold;
+    background: #ffffff33;
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 767px) {
+    .main-header-section .header-14-hero-text {
+        left: 50%;
+        text-align: center;
+        transform: translate(-50%, -50%);
+    }
+
+    .header-14-hero-text h1 {
+        font-size: 28px;
+    }
+
+    .header-14-subtext {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 767px) {
+
+    .header-14-navbar {
+        background-color: #fff !important;
+    }
+
+    .header-14-navbar .navbar-nav > li > a {
+        color: #333 !important;
+    }
+
+    .header-14-navbar .navbar-nav > .dropdown > a .caret {
+        border-top-color: #333;
+    }
+
+    .header-14-navbar-brand img {
+        filter: none; 
+    }
+
+    .header-14-navbar .dropdown-menu {
+        background-color: #fff;
+    }
+
+}
